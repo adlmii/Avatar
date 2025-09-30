@@ -40,6 +40,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -78,32 +79,90 @@ data class Profile(val name: String? = "", val address: String? = "", val email:
 @Composable
 fun MyApp(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "login") {
+    NavHost(navController = navController, startDestination = "homescreen") {
+        composable("homescreen") {
+            HomeScreen(
+                keLogin = { navController.navigate("login") },
+                keRegister = { navController.navigate("register") },
+                keProfile = { navController.navigate("home") },
+                keAvatar = { navController.navigate("home") } // bisa ke Profile terus dialog dibuka
+            )
+        }
         composable("login") {
-            LoginScreen(keRegister = {
-                navController.navigate("register")
-            }, keHome = {
-                navController.navigate("home")
-            })
+            LoginScreen(
+                keRegister = { navController.navigate("register") },
+                keHome = { navController.navigate("home") }
+            )
         }
         composable("home") {
-            ProfileScreen(keAvatar = {
-                navController.navigate("avatar")
-            }, modifier = modifier) // Pass innerPadding here
-        }
-        composable("avatar") {
-            AvatarScreen()
+            ProfileScreen( // dialog Avatar dipanggil dari sini
+                modifier = modifier
+            )
         }
         composable("register") {
-            RegisterScreen(keLogin = {
-                navController.navigate("login")
-            })
+            RegisterScreen(
+                keLogin = { navController.navigate("login") }
+            )
+        }
+    }
+}
+
+@Composable
+fun HomeScreen(
+    keLogin: () -> Unit,
+    keRegister: () -> Unit,
+    keProfile: () -> Unit,
+    keAvatar: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Welcome to Avatar App",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        Button(
+            onClick = { keLogin() },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        ) {
+            Text("Go to Login")
+        }
+
+        Button(
+            onClick = { keRegister() },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        ) {
+            Text("Go to Register")
+        }
+
+        Button(
+            onClick = { keProfile() },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        ) {
+            Text("Go to Profile")
+        }
+
+        Button(
+            onClick = { keAvatar() },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        ) {
+            Text("Go to Avatar")
         }
     }
 }
 
 @Composable
 fun ProfileScreen(keAvatar: (() -> Unit)? = {}, modifier: Modifier = Modifier) {
+    var showAvatarDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -115,6 +174,7 @@ fun ProfileScreen(keAvatar: (() -> Unit)? = {}, modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
         )
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -131,11 +191,15 @@ fun ProfileScreen(keAvatar: (() -> Unit)? = {}, modifier: Modifier = Modifier) {
         }
 
         Button(
-            onClick = { keAvatar?.invoke() },
+            onClick = { showAvatarDialog = true },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Customize Avatar")
         }
+    }
+
+    if (showAvatarDialog) {
+        AvatarDialog(onDismiss = { showAvatarDialog = false })
     }
 }
 
@@ -273,78 +337,109 @@ fun LoginScreen(keRegister: (() -> Unit)? = {}, keHome: (() -> Unit)? = {}, modi
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun AvatarScreen(modifier: Modifier = Modifier) {
-    var showBrow by remember { mutableStateOf(true) }
-    var showEye by remember { mutableStateOf(true) }
-    var showNose by remember { mutableStateOf(true) }
-    var showMouth by remember { mutableStateOf(true) }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .padding(top = 32.dp),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.Top
-    ) {
-
-        Text(
-            text = "Customize Your Avatar",
-            fontSize = 16.sp,
-            color = Color.Gray,
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .padding(bottom = 32.dp)
-                .align(Alignment.CenterHorizontally)
-        )
-
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
+fun AvatarDialog(
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = { onDismiss() }) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
         ) {
-            Image(painter = painterResource(R.drawable.face_0004), contentDescription = "Face")
-
-            if (showBrow) {
-                Image(
-                    painter = painterResource(R.drawable.face_0001),
-                    contentDescription = "Brow",
-                    modifier = Modifier.align(Alignment.Center).padding(bottom = 80.dp)
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Customize Your Avatar",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
-            }
-            if (showEye) {
-                Image(painter = painterResource(R.drawable.face_0003),
-                    contentDescription = "Eye",
-                    modifier = Modifier.align(Alignment.Center))
-            }
-            if (showNose) {
-                Image(painter = painterResource(R.drawable.face_0002),
-                    contentDescription = "Nose",
-                    modifier = Modifier.align(Alignment.Center).padding(top = 80.dp))
-            }
-            if (showMouth) {
-                Image(painter = painterResource(R.drawable.face_0000),
-                    contentDescription = "Mouth",
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp))
-            }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Checkbox(checked = showBrow, onCheckedChange = { showBrow = it })
-            Text("Brow")
+                var showBrow by remember { mutableStateOf(true) }
+                var showEye by remember { mutableStateOf(true) }
+                var showNose by remember { mutableStateOf(true) }
+                var showMouth by remember { mutableStateOf(true) }
 
-            Checkbox(checked = showEye, onCheckedChange = { showEye = it })
-            Text("Eye")
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.face_0004),
+                        contentDescription = "Face"
+                    )
+                    if (showBrow) {
+                        Image(
+                            painter = painterResource(R.drawable.face_0001),
+                            contentDescription = "Brow",
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(bottom = 80.dp)
+                        )
+                    }
+                    if (showEye) {
+                        Image(
+                            painter = painterResource(R.drawable.face_0003),
+                            contentDescription = "Eye",
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                    if (showNose) {
+                        Image(
+                            painter = painterResource(R.drawable.face_0002),
+                            contentDescription = "Nose",
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(top = 80.dp)
+                        )
+                    }
+                    if (showMouth) {
+                        Image(
+                            painter = painterResource(R.drawable.face_0000),
+                            contentDescription = "Mouth",
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 100.dp)
+                        )
+                    }
+                }
 
-            Checkbox(checked = showNose, onCheckedChange = { showNose = it })
-            Text("Nose")
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Checkbox(checked = showMouth, onCheckedChange = { showMouth = it })
-            Text("Mouth")
+                // ✅ FlowRow biar rapi & fleksibel
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = showBrow, onCheckedChange = { showBrow = it })
+                        Text("Brow")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = showEye, onCheckedChange = { showEye = it })
+                        Text("Eye")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = showNose, onCheckedChange = { showNose = it })
+                        Text("Nose")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = showMouth, onCheckedChange = { showMouth = it })
+                        Text("Mouth")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { onDismiss() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Close")
+                }
+            }
         }
     }
 }
